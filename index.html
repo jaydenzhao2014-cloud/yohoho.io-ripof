@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YoHoHo.io - Pirate Battle Royale</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+
+        #gameContainer {
+            position: relative;
+        }
+
+        canvas {
+            border: 5px solid #8B4513;
+            background: #f4e4c1;
+            display: block;
+            cursor: none;
+        }
+
+        #ui {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            padding: 15px 25px;
+            border-radius: 12px;
+            border: 3px solid #FFD700;
+            z-index: 10;
+        }
+
+        .player-info {
+            text-align: center;
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .player-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #FFD700;
+            margin-bottom: 5px;
+        }
+
+        .level-info {
+            font-size: 16px;
+            color: #87CEEB;
+        }
+
+        .xp-bar {
+            width: 300px;
+            height: 25px;
+            background: #333;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid #FFD700;
+            position: relative;
+        }
+
+        .xp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #FFD700, #FFA500);
+            transition: width 0.3s;
+        }
+
+        .xp-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 10px;
+            font-size: 14px;
+            color: white;
+        }
+
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        #leaderboard {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #FFD700;
+            min-width: 200px;
+        }
+
+        .leaderboard-title {
+            color: #FFD700;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #FFD700;
+            padding-bottom: 5px;
+        }
+
+        .leaderboard-entry {
+            color: white;
+            padding: 5px;
+            margin: 3px 0;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .leaderboard-entry.player {
+            background: rgba(255, 215, 0, 0.3);
+        }
+
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            padding: 50px;
+            border-radius: 20px;
+            text-align: center;
+            display: none;
+            z-index: 30;
+            border: 5px solid #FFD700;
+        }
+
+        #gameOver h2 {
+            font-size: 56px;
+            margin-bottom: 20px;
+            color: #FFD700;
+            text-shadow: 2px 2px 4px #8B4513;
+        }
+
+        #gameOver.victory h2 {
+            color: #00FF00;
+        }
+
+        #gameOver p {
+            color: white;
+            font-size: 20px;
+            margin: 10px 0;
+        }
+
+        #restartBtn {
+            margin-top: 25px;
+            padding: 15px 40px;
+            font-size: 22px;
+            background: #FFD700;
+            border: none;
+            border-radius: 10px;
+            color: #8B4513;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        #restartBtn:hover {
+            background: #FFA500;
+            transform: scale(1.1);
+        }
+
+        #instructions {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 12px 25px;
+            border-radius: 10px;
+            border: 2px solid #FFD700;
+            color: white;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .size-indicator {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 2px solid #FFD700;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .coin-popup {
+            position: absolute;
+            color: #FFD700;
+            font-weight: bold;
+            font-size: 20px;
+            pointer-events: none;
+            animation: floatUp 1s ease-out forwards;
+            text-shadow: 2px 2px 4px black;
+        }
+
+        @keyframes floatUp {
+            to {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+
+        <div id="ui">
+            <div class="player-info">
+                <div class="player-name">⚔️ PIRATE ⚔️</div>
+                <div class="level-info">Level <span id="level">1</span></div>
+            </div>
+            <div class="xp-bar">
+                <div class="xp-fill" id="xpBar" style="width: 0%"></div>
+                <div class="xp-text"><span id="xp">0</span> / <span id="xpNeeded">10</span> XP</div>
+            </div>
+            <div class="stats">
+                <div class="stat">💀 Kills: <span id="kills">0</span></div>
+                <div class="stat">🪙 Coins: <span id="coins">0</span></div>
+                <div class="stat">👥 Alive: <span id="alive">20</span></div>
+            </div>
+        </div>
+
+        <div id="leaderboard">
+            <div class="leaderboard-title">🏆 LEADERBOARD</div>
+            <div id="leaderboardList"></div>
+        </div>
+
+        <div class="size-indicator">
+            Size: <span id="sizeDisplay">1.0x</span>
+        </div>
+
+        <div id="instructions">
+            🖱️ Mouse to move | Left Click to attack | Collect coins to grow bigger!
+        </div>
+
+        <div id="gameOver">
+            <h2 id="gameOverText">☠️ DEFEATED! ☠️</h2>
+            <p id="finalRank"></p>
+            <p id="finalKills"></p>
+            <p id="finalCoins"></p>
+            <button id="restartBtn" onclick="location.reload()">⚓ Play Again ⚓</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 1100;
+        canvas.height = 700;
+
+        // Constants
+        const WORLD_SIZE = 3000;
+        const BASE_SPEED = 3.5;
+        const ATTACK_RANGE = 60;
+        const ATTACK_COOLDOWN = 400;
+        const COIN_VALUE = 1;
+        const ISLAND_SHRINK_RATE = 0.0005;
+
+        // Camera
+        const camera = { x: 0, y: 0 };
+
+        // Game state
+        let gameRunning = true;
+        let totalPlayers = 20;
+        let startTime = Date.now();
+
+        // Player
+        const player = {
+            x: WORLD_SIZE / 2,
+            y: WORLD_SIZE / 2,
+            size: 1,
+            baseRadius: 25,
+            radius: 25,
+            speed: BASE_SPEED,
+            angle: 0,
+            xp: 0,
+            level: 1,
+            kills: 0,
+            coins: 0,
+            attacking: false,
+            attackCooldown: 0,
+            attackAngle: 0,
+            color: '#FF6B6B',
+            swordColor: '#C0C0C0'
+        };
+
+        // Game objects
+        let enemies = [];
+        let coins = [];
+        let particles = [];
+        let coinPopups = [];
+        let island = {
+            x: WORLD_SIZE / 2,
+            y: WORLD_SIZE / 2,
+            radius: WORLD_SIZE / 2,
+            maxRadius: WORLD_SIZE / 2
+        };
+
+        // Mouse
+        const mouse = { x: 0, y: 0, worldX: 0, worldY: 0, down: false };
+
+        canvas.addEventListener('mousemove', e => {
+            const rect = canvas.getBoundingClientRect();
+            mouse.x = e.clientX - rect.left;
+            mouse.y = e.clientY - rect.top;
+            mouse.worldX = mouse.x + camera.x;
+            mouse.worldY = mouse.y + camera.y;
+        });
+
+        canvas.addEventListener('mousedown', () => {
+            mouse.down = true;
+            attack(player);
+        });
+
+        canvas.addEventListener('mouseup', () => mouse.down = false);
+
+        // Initialize game
+        function init() {
+            // Create enemies
+            const colors = ['#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DFE6E9', '#74B9FF', '#A29BFE', '#FD79A8', '#FDCB6E', '#6C5CE7'];
+
+            for (let i = 0; i < 19; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const distance = Math.random() * (island.radius - 200);
+
+                enemies.push({
+                    x: island.x + Math.cos(angle) * distance,
+                    y: island.y + Math.sin(angle) * distance,
+                    size: 0.8 + Math.random() * 0.4,
+                    baseRadius: 25,
+                    radius: 25,
+                    speed: BASE_SPEED,
+                    angle: Math.random() * Math.PI * 2,
+                    xp: Math.floor(Math.random() * 15),
+                    level: 1,
+                    kills: 0,
+                    attacking: false,
+                    attackCooldown: 0,
+                    attackAngle: 0,
+                    color: colors[i % colors.length],
+                    swordColor: '#C0C0C0',
+                    aiTimer: 0,
+                    targetX: 0,
+                    targetY: 0,
+                    name: generatePirateName()
+                });
+                updateEnemySize(enemies[i]);
+            }
+
+            // Create initial coins
+            for (let i = 0; i < 100; i++) {
+                spawnCoin();
+            }
+        }
+
+        // Generate pirate names
+        function generatePirateName() {
+            const prefixes = ['Captain', 'Pirate', 'Sailor', 'Scurvy', 'Salty', 'Mad', 'Black', 'Red'];
+            const suffixes = ['Beard', 'Jack', 'Pete', 'Bob', 'Jim', 'Tom', 'Sam', 'Bill'];
+            return prefixes[Math.floor(Math.random() * prefixes.length)] + ' ' +
+                   suffixes[Math.floor(Math.random() * suffixes.length)];
+        }
+
+        // Spawn coin
+        function spawnCoin() {
+            const angle = Math.random() * Math.PI * 2;
+            const distance = Math.random() * (island.radius - 50);
+
+            coins.push({
+                x: island.x + Math.cos(angle) * distance,
+                y: island.y + Math.sin(angle) * distance,
+                radius: 8,
+                value: COIN_VALUE,
+                rotation: Math.random() * Math.PI * 2
+            });
+        }
+
+        // Update player size based on XP
+        function updatePlayerSize() {
+            player.size = 1 + (player.xp * 0.02);
+            player.radius = player.baseRadius * player.size;
+            player.speed = BASE_SPEED / Math.sqrt(player.size);
+
+            // Level up
+            const xpNeeded = player.level * 10;
+            if (player.xp >= xpNeeded) {
+                player.level++;
+                updateXPBar();
+            }
+
+            document.getElementById('sizeDisplay').textContent = player.size.toFixed(1) + 'x';
+        }
+
+        // Update enemy size
+        function updateEnemySize(enemy) {
+            enemy.size = 1 + (enemy.xp * 0.02);
+            enemy.radius = enemy.baseRadius * enemy.size;
+            enemy.speed = BASE_SPEED / Math.sqrt(enemy.size);
+
+            const xpNeeded = enemy.level * 10;
+            if (enemy.xp >= xpNeeded) {
+                enemy.level++;
+            }
+        }
+
+        // Update player
+        function updatePlayer() {
+            // Move towards mouse
+            const dx = mouse.worldX - player.x;
+            const dy = mouse.worldY - player.y;
+            const dist = Math.hypot(dx, dy);
+
+            if (dist > 5) {
+                player.x += (dx / dist) * player.speed;
+                player.y += (dy / dist) * player.speed;
+                player.angle = Math.atan2(dy, dx);
+            }
+
+            // Keep on island
+            const distToCenter = Math.hypot(player.x - island.x, player.y - island.y);
+            if (distToCenter > island.radius - player.radius) {
+                const angle = Math.atan2(player.y - island.y, player.x - island.x);
+                player.x = island.x + Math.cos(angle) * (island.radius - player.radius);
+                player.y = island.y + Math.sin(angle) * (island.radius - player.radius);
+            }
+
+            // Attack cooldown
+            if (player.attackCooldown > 0) {
+                player.attackCooldown--;
+            }
+
+            // Collect coins
+            for (let i = coins.length - 1; i >= 0; i--) {
+                const coin = coins[i];
+                const dist = Math.hypot(player.x - coin.x, player.y - coin.y);
+
+                if (dist < player.radius + coin.radius) {
+                    player.xp += coin.value;
+                    player.coins += coin.value;
+                    coins.splice(i, 1);
+                    updatePlayerSize();
+                    updateXPBar();
+                    createCoinPopup(coin.x, coin.y, '+' + coin.value);
+                    spawnCoin(); // Spawn new coin
+                }
+            }
+
+            // Update camera
+            camera.x = player.x - canvas.width / 2;
+            camera.y = player.y - canvas.height / 2;
+            camera.x = Math.max(0, Math.min(WORLD_SIZE - canvas.width, camera.x));
+            camera.y = Math.max(0, Math.min(WORLD_SIZE - canvas.height, camera.y));
+        }
+
+        // Attack
+        function attack(attacker) {
+            if (attacker.attackCooldown > 0) return;
+
+            attacker.attacking = true;
+            attacker.attackCooldown = ATTACK_COOLDOWN / 60;
+            attacker.attackAngle = attacker.angle;
+
+            setTimeout(() => {
+                attacker.attacking = false;
+            }, 200);
+
+            // Check hits on enemies
+            if (attacker === player) {
+                for (let i = enemies.length - 1; i >= 0; i--) {
+                    const enemy = enemies[i];
+                    const dist = Math.hypot(player.x - enemy.x, player.y - enemy.y);
+                    const attackDist = player.radius + ATTACK_RANGE;
+
+                    if (dist < attackDist) {
+                        const angleToEnemy = Math.atan2(enemy.y - player.y, enemy.x - player.x);
+                        const angleDiff = Math.abs(normalizeAngle(angleToEnemy - player.attackAngle));
+
+                        if (angleDiff < Math.PI / 3) {
+                            // Kill enemy
+                            const reward = Math.floor(enemy.xp / 2) + 5;
+                            player.xp += reward;
+                            player.kills++;
+                            player.coins += reward;
+
+                            createParticles(enemy.x, enemy.y, enemy.color);
+                            createCoinPopup(enemy.x, enemy.y, '+' + reward);
+
+                            enemies.splice(i, 1);
+                            updatePlayerSize();
+                            updateXPBar();
+                            updateStats();
+                        }
+                    }
+                }
+            } else {
+                // Enemy attack
+                const distToPlayer = Math.hypot(attacker.x - player.x, attacker.y - player.y);
+                const attackDist = attacker.radius + ATTACK_RANGE;
+
+                if (distToPlayer < attackDist) {
+                    const angleToPlayer = Math.atan2(player.y - attacker.y, player.x - attacker.x);
+                    const angleDiff = Math.abs(normalizeAngle(angleToPlayer - attacker.attackAngle));
+
+                    if (angleDiff < Math.PI / 3) {
+                        // Player killed
+                        endGame(false);
+                    }
+                }
+            }
+        }
+
+        // Normalize angle
+        function normalizeAngle(angle) {
+            while (angle > Math.PI) angle -= Math.PI * 2;
+            while (angle < -Math.PI) angle += Math.PI * 2;
+            return angle;
+        }
+
+        // Update enemies (AI)
+        function updateEnemies() {
+            enemies.forEach(enemy => {
+                enemy.aiTimer++;
+
+                // Decision making
+                if (enemy.aiTimer > 60) {
+                    enemy.aiTimer = 0;
+
+                    // Find nearest coin
+                    let nearestCoin = null;
+                    let nearestCoinDist = Infinity;
+
+                    coins.forEach(coin => {
+                        const dist = Math.hypot(enemy.x - coin.x, enemy.y - coin.y);
+                        if (dist < nearestCoinDist) {
+                            nearestCoinDist = dist;
+                            nearestCoin = coin;
+                        }
+                    });
+
+                    // Check for nearby threats
+                    let threat = null;
+                    let threatDist = Infinity;
+
+                    if (Math.hypot(enemy.x - player.x, enemy.y - player.y) < 200 && player.size > enemy.size * 1.2) {
+                        threat = player;
+                        threatDist = Math.hypot(enemy.x - player.x, enemy.y - player.y);
+                    }
+
+                    enemies.forEach(other => {
+                        if (other === enemy) return;
+                        const dist = Math.hypot(enemy.x - other.x, enemy.y - other.y);
+                        if (dist < 200 && other.size > enemy.size * 1.2 && dist < threatDist) {
+                            threat = other;
+                            threatDist = dist;
+                        }
+                    });
+
+                    // Decide action
+                    if (threat) {
+                        // Run away
+                        const angle = Math.atan2(enemy.y - threat.y, enemy.x - threat.x);
+                        enemy.targetX = enemy.x + Math.cos(angle) * 200;
+                        enemy.targetY = enemy.y + Math.sin(angle) * 200;
+                    } else if (nearestCoin && nearestCoinDist < 300) {
+                        // Go to coin
+                        enemy.targetX = nearestCoin.x;
+                        enemy.targetY = nearestCoin.y;
+                    } else {
+                        // Random movement
+                        const angle = Math.random() * Math.PI * 2;
+                        enemy.targetX = enemy.x + Math.cos(angle) * 100;
+                        enemy.targetY = enemy.y + Math.sin(angle) * 100;
+                    }
+                }
+
+                // Move to target
+                const dx = enemy.targetX - enemy.x;
+                const dy = enemy.targetY - enemy.y;
+                const dist = Math.hypot(dx, dy);
+
+                if (dist > 5) {
+                    enemy.x += (dx / dist) * enemy.speed;
+                    enemy.y += (dy / dist) * enemy.speed;
+                    enemy.angle = Math.atan2(dy, dx);
+                }
+
+                // Keep on island
+                const distToCenter = Math.hypot(enemy.x - island.x, enemy.y - island.y);
+                if (distToCenter > island.radius - enemy.radius) {
+                    const angle = Math.atan2(enemy.y - island.y, enemy.x - island.x);
+                    enemy.x = island.x + Math.cos(angle) * (island.radius - enemy.radius);
+                    enemy.y = island.y + Math.sin(angle) * (island.radius - enemy.radius);
+                }
+
+                // Attack cooldown
+                if (enemy.attackCooldown > 0) {
+                    enemy.attackCooldown--;
+                }
+
+                // Attack player if close and bigger
+                const distToPlayer = Math.hypot(enemy.x - player.x, enemy.y - player.y);
+                if (distToPlayer < enemy.radius + ATTACK_RANGE + 20 && enemy.size >= player.size * 0.9) {
+                    attack(enemy);
+                }
+
+                // Collect coins
+                for (let i = coins.length - 1; i >= 0; i--) {
+                    const coin = coins[i];
+                    const dist = Math.hypot(enemy.x - coin.x, enemy.y - coin.y);
+
+                    if (dist < enemy.radius + coin.radius) {
+                        enemy.xp += coin.value;
+                        coins.splice(i, 1);
+                        updateEnemySize(enemy);
+                        spawnCoin();
+                        break;
+                    }
+                }
+            });
+
+            // Enemy vs enemy combat
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                for (let j = i - 1; j >= 0; j--) {
+                    const e1 = enemies[i];
+                    const e2 = enemies[j];
+                    const dist = Math.hypot(e1.x - e2.x, e1.y - e2.y);
+
+                    if (dist < (e1.radius + e2.radius) && Math.random() < 0.01) {
+                        // Bigger one wins
+                        if (e1.size > e2.size * 1.1) {
+                            e1.xp += Math.floor(e2.xp / 2) + 3;
+                            e1.kills++;
+                            updateEnemySize(e1);
+                            createParticles(e2.x, e2.y, e2.color);
+                            enemies.splice(j, 1);
+                        } else if (e2.size > e1.size * 1.1) {
+                            e2.xp += Math.floor(e1.xp / 2) + 3;
+                            e2.kills++;
+                            updateEnemySize(e2);
+                            createParticles(e1.x, e1.y, e1.color);
+                            enemies.splice(i, 1);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Update island (shrink)
+        function updateIsland() {
+            if (island.radius > 500) {
+                island.radius -= ISLAND_SHRINK_RATE * island.maxRadius;
+            }
+        }
+
+        // Create particles
+        function createParticles(x, y, color) {
+            for (let i = 0; i < 12; i++) {
+                particles.push({
+                    x, y,
+                    vx: (Math.random() - 0.5) * 6,
+                    vy: (Math.random() - 0.5) * 6,
+                    life: 40,
+                    color
+                });
+            }
+        }
+
+        // Create coin popup
+        function createCoinPopup(x, y, text) {
+            const popup = document.createElement('div');
+            popup.className = 'coin-popup';
+            popup.textContent = text;
+            popup.style.left = (x - camera.x) + 'px';
+            popup.style.top = (y - camera.y) + 'px';
+            document.getElementById('gameContainer').appendChild(popup);
+
+            setTimeout(() => popup.remove(), 1000);
+        }
+
+        // Update UI
+        function updateXPBar() {
+            const xpNeeded = player.level * 10;
+            const progress = (player.xp % xpNeeded) / xpNeeded * 100;
+
+            document.getElementById('level').textContent = player.level;
+            document.getElementById('xp').textContent = player.xp % xpNeeded;
+            document.getElementById('xpNeeded').textContent = xpNeeded;
+            document.getElementById('xpBar').style.width = progress + '%';
+        }
+
+        function updateStats() {
+            document.getElementById('kills').textContent = player.kills;
+            document.getElementById('coins').textContent = player.coins;
+            document.getElementById('alive').textContent = enemies.length + 1;
+        }
+
+        function updateLeaderboard() {
+            const players = [
+                { name: 'You', kills: player.kills, xp: player.xp, isPlayer: true },
+                ...enemies.map(e => ({ name: e.name, kills: e.kills, xp: e.xp, isPlayer: false }))
+            ];
+
+            players.sort((a, b) => b.xp - a.xp);
+
+            const list = document.getElementById('leaderboardList');
+            list.innerHTML = players.slice(0, 10).map((p, i) =>
+                `<div class="leaderboard-entry ${p.isPlayer ? 'player' : ''}">
+                    ${i + 1}. ${p.name} - ${p.xp} XP
+                </div>`
+            ).join('');
+        }
+
+        // Draw functions
+        function drawWorld() {
+            // Ocean
+            ctx.fillStyle = '#2E86AB';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Water texture
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            for (let i = 0; i < 30; i++) {
+                const x = (Math.sin(Date.now() / 1000 + i) * 200 - camera.x) % canvas.width;
+                const y = (Math.cos(Date.now() / 1000 + i * 2) * 200 - camera.y) % canvas.height;
+                ctx.beginPath();
+                ctx.arc(x, y, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Island
+            ctx.fillStyle = '#f4e4c1';
+            ctx.beginPath();
+            ctx.arc(island.x - camera.x, island.y - camera.y, island.radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Island border
+            ctx.strokeStyle = '#d4c4a1';
+            ctx.lineWidth = 8;
+            ctx.stroke();
+
+            // Sand texture
+            ctx.fillStyle = '#e8d4b1';
+            for (let i = 0; i < 100; i++) {
+                const angle = (i / 100) * Math.PI * 2;
+                const r = island.radius * (0.3 + Math.random() * 0.6);
+                const x = island.x + Math.cos(angle) * r - camera.x;
+                const y = island.y + Math.sin(angle) * r - camera.y;
+                ctx.fillRect(x, y, 2, 2);
+            }
+
+            // Coins
+            coins.forEach(coin => {
+                coin.rotation += 0.05;
+                const screenX = coin.x - camera.x;
+                const screenY = coin.y - camera.y;
+
+                ctx.save();
+                ctx.translate(screenX, screenY);
+                ctx.rotate(coin.rotation);
+
+                ctx.fillStyle = '#FFD700';
+                ctx.beginPath();
+                ctx.arc(0, 0, coin.radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.strokeStyle = '#FFA500';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                ctx.fillStyle = '#FFA500';
+                ctx.font = 'bold 10px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('$', 0, 0);
+
+                ctx.restore();
+            });
+
+            // Particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vx *= 0.95;
+                p.vy *= 0.95;
+                p.life--;
+
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                    continue;
+                }
+
+                ctx.globalAlpha = p.life / 40;
+                ctx.fillStyle = p.color;
+                ctx.fillRect(p.x - camera.x, p.y - camera.y, 5, 5);
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        function drawPirate(pirate, isPlayer = false) {
+            const screenX = pirate.x - camera.x;
+            const screenY = pirate.y - camera.y;
+
+            // Shadow
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.beginPath();
+            ctx.ellipse(screenX, screenY + pirate.radius, pirate.radius * 0.8, pirate.radius * 0.3, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Body
+            ctx.fillStyle = pirate.color;
+            ctx.beginPath();
+            ctx.arc(screenX, screenY, pirate.radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Outline
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Pirate hat
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(screenX, screenY - pirate.radius, pirate.radius * 0.6, 0, Math.PI, true);
+            ctx.fill();
+
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(screenX - pirate.radius * 0.4, screenY - pirate.radius - 5, pirate.radius * 0.8, 5);
+
+            // Eye patch
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(screenX + pirate.radius * 0.3, screenY - pirate.radius * 0.2, pirate.radius * 0.15, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Sword
+            if (pirate.attacking) {
+                ctx.save();
+                ctx.translate(screenX, screenY);
+                ctx.rotate(pirate.attackAngle);
+
+                // Sword blade
+                ctx.fillStyle = pirate.swordColor;
+                ctx.fillRect(pirate.radius, -4, ATTACK_RANGE, 8);
+
+                // Sword tip
+                ctx.beginPath();
+                ctx.moveTo(pirate.radius + ATTACK_RANGE, 0);
+                ctx.lineTo(pirate.radius + ATTACK_RANGE + 10, 0);
+                ctx.lineTo(pirate.radius + ATTACK_RANGE, -5);
+                ctx.closePath();
+                ctx.fill();
+
+                // Sword handle
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(pirate.radius - 5, -6, 10, 12);
+
+                ctx.restore();
+            } else {
+                // Sword at side
+                ctx.save();
+                ctx.translate(screenX, screenY);
+                ctx.rotate(pirate.angle + Math.PI / 4);
+
+                ctx.fillStyle = pirate.swordColor;
+                ctx.fillRect(pirate.radius * 0.7, -3, 30, 6);
+
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(pirate.radius * 0.7 - 5, -4, 8, 8);
+
+                ctx.restore();
+            }
+
+            // Name tag (enemies only)
+            if (!isPlayer && pirate.name) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(screenX - 40, screenY - pirate.radius - 25, 80, 18);
+
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(pirate.name, screenX, screenY - pirate.radius - 16);
+            }
+
+            // Size indicator
+            if (pirate.size > 1.5) {
+                ctx.fillStyle = '#FFD700';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(pirate.size.toFixed(1) + 'x', screenX, screenY + pirate.radius + 15);
+            }
+        }
+
+        // Custom cursor
+        function drawCursor() {
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(mouse.x, mouse.y, 8, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(mouse.x - 12, mouse.y);
+            ctx.lineTo(mouse.x - 4, mouse.y);
+            ctx.moveTo(mouse.x + 4, mouse.y);
+            ctx.lineTo(mouse.x + 12, mouse.y);
+            ctx.moveTo(mouse.x, mouse.y - 12);
+            ctx.lineTo(mouse.x, mouse.y - 4);
+            ctx.moveTo(mouse.x, mouse.y + 4);
+            ctx.lineTo(mouse.x, mouse.y + 12);
+            ctx.stroke();
+        }
+
+        // Game loop
+        let frameCount = 0;
+        function gameLoop() {
+            if (!gameRunning) return;
+
+            frameCount++;
+
+            updatePlayer();
+            updateEnemies();
+            updateIsland();
+
+            drawWorld();
+
+            // Draw enemies
+            enemies.forEach(enemy => drawPirate(enemy, false));
+
+            // Draw player
+            drawPirate(player, true);
+
+            // Draw cursor
+            drawCursor();
+
+            // Update UI periodically
+            if (frameCount % 30 === 0) {
+                updateStats();
+                updateLeaderboard();
+            }
+
+            // Check win condition
+            if (enemies.length === 0) {
+                endGame(true);
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // End game
+        function endGame(won) {
+            gameRunning = false;
+            const gameOver = document.getElementById('gameOver');
+            gameOver.style.display = 'block';
+
+            if (won) {
+                gameOver.classList.add('victory');
+                document.getElementById('gameOverText').textContent = '🏆 VICTORY ROYALE! 🏆';
+            } else {
+                document.getElementById('gameOverText').textContent = '☠️ DEFEATED! ☠️';
+            }
+
+            const rank = enemies.length + 1;
+            const surviveTime = Math.floor((Date.now() - startTime) / 1000);
+
+            document.getElementById('finalRank').textContent = `Rank: #${rank} / ${totalPlayers}`;
+            document.getElementById('finalKills').textContent = `Kills: ${player.kills}`;
+            document.getElementById('finalCoins').textContent = `Coins Collected: ${player.coins}`;
+        }
+
+        // Start game
+        init();
+        updateXPBar();
+        updateStats();
+        gameLoop();
+    </script>
+</body>
+</html>
